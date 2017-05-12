@@ -135,7 +135,7 @@ bool Circle::Overlap(const Circle* target) const
 
 	return (abs(deltaX) < radius && abs(deltaY) < radius*sin(x_angle));
 }
-bool Circle::Intersects(const Rectng * target) const
+bool Circle::Intersects(const IsoRect * target) const
 {
 	if (target == nullptr)return false;
 	iPoint vec = (target->GetPosition() + target->GetDisplacement()) - position;
@@ -165,7 +165,7 @@ iPoint Circle::NearestPoint(const Circle* target) const
 	return iPoint(position.x + vec.x, position.y + vec.y);
 }
 
-iPoint Circle::NearestPoint(const Rectng* target) const
+iPoint Circle::NearestPoint(const IsoRect* target) const
 {
 	iPoint vec = (target->GetPosition() + target->GetDisplacement()) - position;
 	fPoint norm(vec.x, vec.y);
@@ -189,49 +189,110 @@ uint Circle::GetRad() const
 
 ///Class Rectangle ------------------------------
 //Constructors ==============
-Rectng::Rectng(const iPoint& position, uint width, uint height, const iPoint& desplacement) :Primitive(position, desplacement), width(width), height(height)
+IsoRect::IsoRect(const iPoint& position, float width, float height, const iPoint& desplacement) :Primitive(position, desplacement), width(width), height(height)
 {}
 
-Rectng::Rectng(const Rectng& copy) : Primitive(copy), width(copy.width), height(copy.height)
+IsoRect::IsoRect(const IsoRect& copy) : Primitive(copy), width(copy.width), height(copy.height)
 {}
 
 //Destructors ===============
-Rectng::~Rectng()
+IsoRect::~IsoRect()
 {}
 
-
 //Functionality =============
-bool Rectng::Draw()
+bool IsoRect::Draw() const
 {
 	//Draw lines with the correct angles and coordinates to form the rotated quad
 	iPoint draw_pos(position.x + displacement.x, position.y + displacement.y);
 
-	App->render->DrawLine(draw_pos.x - width*0.5, draw_pos.y, draw_pos.x, draw_pos.y - height*sin(x_angle), 255, 255, 255, 255, true);
-	App->render->DrawLine(draw_pos.x - width*0.5, draw_pos.y, draw_pos.x, draw_pos.y + height*sin(x_angle), 255, 255, 255, 255, true);
-	App->render->DrawLine(draw_pos.x + width*0.5, draw_pos.y, draw_pos.x, draw_pos.y - height*sin(x_angle), 255, 255, 255, 255, true);
-	App->render->DrawLine(draw_pos.x + width*0.5, draw_pos.y, draw_pos.x, draw_pos.y + height*sin(x_angle), 255, 255, 255, 255, true);
+	App->render->DrawLine(draw_pos.x - width * 0.5f, draw_pos.y, draw_pos.x, draw_pos.y - height*sin(x_angle), color.r, color.g, color.b, color.a, true);
+	App->render->DrawLine(draw_pos.x - width * 0.5f, draw_pos.y, draw_pos.x, draw_pos.y + height*sin(x_angle), color.r, color.g, color.b, color.a, true);
+	App->render->DrawLine(draw_pos.x + width * 0.5f, draw_pos.y, draw_pos.x, draw_pos.y - height*sin(x_angle), color.r, color.g, color.b, color.a, true);
+	App->render->DrawLine(draw_pos.x + width * 0.5f, draw_pos.y, draw_pos.x, draw_pos.y + height*sin(x_angle), color.r, color.g, color.b, color.a, true);
 
 	return true;
 }
 
-void Rectng::SetWidth(uint w)
+void IsoRect::SetWidth(uint w)
 {
 	width = w;
 }
 
-void Rectng::SetHeight(uint h)
+void IsoRect::SetHeight(uint h)
 {
 	height = h;
 }
 
-uint Rectng::GetWidth() const
+uint IsoRect::GetWidth() const
 {
 	return width;
 }
 
-uint Rectng::GetHeight() const
+uint IsoRect::GetHeight() const
 {
 	return height;
+}
+
+bool IsoRect::Inside(const iPoint pos) const
+{
+	/*int delta_x = abs(pos.x - position.x);
+	if (delta_x > width / 2)
+		return false;
+
+	int delta_y = abs(pos.y - position.y);
+	int result = delta_x * (2 * height * sin(x_angle));
+	result = result / width;
+	result += height * sin(x_angle);
+
+	if (delta_y < result)
+		return true;
+	return false;
+	*/
+	float dx = abs(pos.x - position.x);
+	float dy = abs(pos.y - position.y);
+	if (dx / width + dy / height <= 1)
+		return true;
+
+	return false;
+}
+bool IsoRect::Overlaps(SDL_Rect rect) const
+{
+	//check if SDL_Rect vertices are inside IsoRect
+	if (Inside(iPoint(rect.x, rect.y)))
+		return true;
+	if (Inside(iPoint(rect.x + rect.w, rect.y)))
+		return true;
+	if (Inside(iPoint(rect.x, rect.y + rect.h)))
+		return true;
+	if (Inside(iPoint(rect.x + rect.w, rect.y + rect.h)))
+		return true;
+
+	//check if IsoRect vertices are inside SDL_Rect 
+	iPoint up(position.x, position.y - height / 2);
+	if (up.x > rect.x && up.x < rect.x + rect.w
+		&& up.y > rect.y && up.y < rect.y + rect.h)
+		return true;
+
+	iPoint left(position.x - width / 2, position.y);
+	if (left.x > rect.x && left.x < rect.x + rect.w
+		&& left.y > rect.y && left.y < rect.y + rect.h)
+		return true;
+
+	iPoint right(position.x + width / 2, position.y);
+	if (right.x > rect.x && right.x < rect.x + rect.w
+		&& right.y > rect.y && right.y < rect.y + rect.h)
+		return true;
+
+	iPoint down(position.x, position.y + height / 2);
+	if (down.x > rect.x && down.x < rect.x + rect.w
+		&& down.y > rect.y && down.y < rect.y + rect.h)
+		return true;
+
+	return false;
+}
+bool IsoRect::Overlaps(Circle circle) const
+{
+	return circle.Intersects(this);
 }
 /// ---------------------------------------------
 
@@ -390,7 +451,7 @@ Line::Line(const iPoint & position, const iPoint & position_2, const SDL_Color& 
 
 }
 
-Line::Line(const Rectng & copy) : Primitive(position, displacement, color), position_2(position_2)
+Line::Line(const IsoRect & copy) : Primitive(position, displacement, color), position_2(position_2)
 {
 }
 

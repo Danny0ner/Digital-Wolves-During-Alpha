@@ -271,8 +271,9 @@ Entity * j1EntityManager::CheckForCombat(iPoint position, int range, Side side)
 		{
 			Building* building = (Building*)entity_array[i];
 			//TODO: USE ISO RECT
-			if (entity_array[i]->GetX() <= position.x + range + building->GetBuildRectangle().GetWidth() && entity_array[i]->GetX() >= position.x - range - building->GetBuildRectangle().GetWidth() &&
-				entity_array[i]->GetY() <= position.y + range + building->GetBuildRectangle().GetHeight() && entity_array[i]->GetY() >= position.y - range - building->GetBuildRectangle().GetHeight() &&
+			//if (entity_array[i]->GetX() <= position.x + range + building->GetBuildRectangle().GetWidth() && entity_array[i]->GetX() >= position.x - range - building->GetBuildRectangle().GetWidth() &&
+			//	entity_array[i]->GetY() <= position.y + range + building->GetBuildRectangle().GetHeight() && entity_array[i]->GetY() >= position.y - range - building->GetBuildRectangle().GetHeight() &&
+			if (building->GetBuildRectangle().Inside({ position.x, position.y }) &&
 				side != entity_array[i]->GetSide() && entity_array[i]->GetHp() > 0)
 				return entity_array[i];
 		}

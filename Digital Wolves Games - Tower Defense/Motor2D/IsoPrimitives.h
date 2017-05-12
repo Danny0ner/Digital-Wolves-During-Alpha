@@ -5,7 +5,7 @@
 #include "p2Point.h"
 #include"SDL_image/include/SDL_image.h"
 
-class Rectng;
+class IsoRect;
 
 ///Class Primitive ------------------------------
 //Base primitive class
@@ -67,11 +67,11 @@ public:
 	bool	IsIn(const fPoint* loc) const;
 	bool	Intersects(const SDL_Rect* rect) const;
 	bool	Intersects(const Circle* target)const;
-	bool	Intersects(const Rectng* target)const;
+	bool	Intersects(const IsoRect* target)const;
 	bool	Intersects(const iPoint* point)const;
 	bool	Overlap(const Circle* target)const;
 	iPoint  NearestPoint(const Circle* target)const;
-	iPoint	NearestPoint(const Rectng* target)const;
+	iPoint	NearestPoint(const IsoRect* target)const;
 
 	//Set Methods
 	void	SetRad(uint r);
@@ -83,30 +83,32 @@ public:
 
 ///Class Rectangle ------------------------------
 //Rectangle isometric primitive
-class Rectng : public Primitive
+class IsoRect : public Primitive
 {
 public:
-
-	Rectng(const iPoint& position = { 0,0 }, uint width = 0, uint height = 0, const iPoint& displacement = { 0,0 });
-	Rectng(const Rectng& copy);
-	~Rectng();
+	IsoRect(const iPoint& position = { 0,0 }, float width = 0, float height = 0, const iPoint& displacement = { 0,0 });
+	IsoRect(const IsoRect& copy);
+	~IsoRect();
 
 private:
-
-	uint width = 0;
-	uint height = 0;
+	float width = 0;
+	float height = 0;
 
 public:
 
 	//Functionality ---------
 	//Draw
-	bool	Draw();
+	bool	Draw() const;
 	//Set Methods
 	void	SetWidth(uint w);
 	void	SetHeight(uint h);
 	//Get Methods
 	uint	GetWidth()const;
 	uint	GetHeight()const;
+
+	bool Inside(const iPoint pos) const;
+	bool Overlaps(SDL_Rect rect) const;
+	bool Overlaps(Circle circle) const;
 };
 /// ---------------------------------------------
 
@@ -158,7 +160,7 @@ class Line : public Primitive
 public:
 
 	Line(const iPoint& position, const iPoint& position_2, const SDL_Color& color, const iPoint& displacement = { 0,0 });
-	Line(const Rectng& copy);
+	Line(const IsoRect& copy);
 	~Line();
 
 private:
